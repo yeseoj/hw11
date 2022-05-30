@@ -11,7 +11,6 @@
 #define FALSE 0
 #define TRUE 1
 #define MAX_VERTICES 10
-#define MAX_STACK_SIZE 10
 #define MAX_QUEUE_SIZE 10
 
 /* vertex */
@@ -28,13 +27,6 @@ typedef struct head {
 
 short int visited[MAX_VERTICES];
 
-/* for stack */
-int stack[MAX_STACK_SIZE];
-int top = -1;
-
-void push(int n);
-int pop();
-
 /* for queue */
 int queue[MAX_QUEUE_SIZE];
 int front = -1;
@@ -50,7 +42,7 @@ int InsertEdge(headArray* h, int v1, int v2);       /* edge 삽입 */
 int CheckEdge(headArray* h, int v1, int v2);        /* edge 존재여부 체크 */
 void DepthFirstSearch(headArray* h, int v);         /* 깊이 우선 탐색 */
 void BreathFirstSearch(headArray* h, int v);        /* 너비 우선 탐색 */
-void resetVisited();
+void resetVisited();                                /* visited 배열 초기화 */
 void PrintGraph(headArray* h);                      /* 그래프 출력 */
 void freeGraph(headArray* h);                       /* 할당된 메모리 해제 */
 
@@ -154,7 +146,9 @@ int CheckEdge(headArray* h, int v1, int v2) {
     return 0;
 }
 
-/* edge 삽입 */
+/** edge 삽입
+ * 인접 노드는 오름차순으로 삽입된다.
+*/
 int InsertEdge(headArray* h, int v1, int v2) {
     /* 그래프가 정의되지 않은 경우 */
     if (h == NULL) {
@@ -189,15 +183,30 @@ int InsertEdge(headArray* h, int v1, int v2) {
     /* vertex에 연결된 edge가 없으면 바로 연결 */
     if (h->adjLists[v1] == NULL)
         h->adjLists[v1] = node_v1;
-    /* 그렇지 않은 경우 edge의 끝까지 가서 연결 */
+    /* 그렇지 않은 경우 오름차순으로 삽입 */
     else {
-        listNode *p = h->adjLists[v1];
-        listNode *trail = NULL;
+        listNode* p = h->adjLists[v1];
+        listNode* trail = NULL;
         while (p != NULL) {
+            if (p->data > v2) {
+                /* 첫 번째 노드 앞쪽인지 검사 */
+                if (p == h->adjLists[v1]) {
+                    h->adjLists[v1] = node_v1;
+                    node_v1->link = p;
+                }
+                /* 중간에 삽입하는지 검사 */
+                else {
+                    node_v1->link = p;
+                    trail->link = node_v1;
+                }
+                break;
+            }
             trail = p;
             p = p->link;
         }
-        trail->link = node_v1;
+        /* 마지막까지 돌았다면 마지막에 삽입 */
+        if (p == NULL)
+            trail->link = node_v1;
     }
     /* vertex v2에 대해서도 동일 */
     if (h->adjLists[v2] == NULL)
@@ -206,10 +215,25 @@ int InsertEdge(headArray* h, int v1, int v2) {
         listNode* p = h->adjLists[v2];
         listNode* trail = NULL;
         while (p != NULL) {
+            if (p->data > v1) {
+                /* 첫 번째 노드 앞쪽인지 검사 */
+                if (p == h->adjLists[v2]) {
+                    h->adjLists[v2] = node_v2;
+                    node_v2->link = p;
+                }
+                /* 중간에 삽입하는지 검사 */
+                else {
+                    node_v2->link = p;
+                    trail->link = node_v2;
+                }
+                break;
+            }
             trail = p;
             p = p->link;
         }
-        trail->link = node_v2;
+        /* 마지막까지 돌았다면 마지막에 삽입 */
+        if (p == NULL)
+            trail->link = node_v2;
     }
 
     return 0;
@@ -221,7 +245,6 @@ void resetVisited() {
 }
 
 /** 깊이 우선 탐색
- * 숫자가 작은 순으로 방문
  * recursive 방식 */
 void DepthFirstSearch(headArray* h, int v) {
     /* 그래프가 정의되지 않은 경우 */
@@ -235,19 +258,14 @@ void DepthFirstSearch(headArray* h, int v) {
         return;
     }
 
+    listNode* w;
     visited[v] = TRUE;
     printf("%5d", v);
-    listNode* w = h->adjLists[v];
-    int min = w->data;
-    for (; w; w = w->link) {
-        if (!visited[w->data]) {
-            if (min > w->data)
-                min = w->data;
-        }
+    for (w = h->adjLists[v]; w; w = w->link) { 
+        if (!visited[w->data])
+            DepthFirstSearch(h, w->data);
     }
-    DepthFirstSearch(h, min);
 }
-
 /** 너비 우선 탐색
  * 숫자가 작은 순으로 방문
  * iterative 방식 */
@@ -299,7 +317,18 @@ void PrintGraph(headArray* h) {
 
 /* graph에 동적 할당된 메모리 해제 */
 void freeGraph(headArray* h) {
+    listNode* p = NULL;
+    listNode* prev = NULL;
 
+    for (int i = 0; i < h->size; i++) {
+        p = h->adjLists[i];
+        while (p != NULL) {
+            prev = p;
+            p = p->link;
+            free(prev);
+        }
+    }
+    free(h);
 }
 
 /* for stack */
