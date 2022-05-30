@@ -3,7 +3,7 @@
  * 학번: 2021041018
  * 이름: 장예서
  * 개요: undirected graph를 인접 리스트로 표현
- * 수정일: 2022-05-28
+ * 수정일: 2022-05-30
  */
 
 #include<stdio.h>
@@ -16,13 +16,13 @@
 /* vertex에 연결되는 인접 정점 */
 typedef struct a_vertex {
     int data;
-    struct vertex* link;
+    struct a_vertex* link;
 } listNode;
 
 /* 인접 리스트의 head vertex */
 typedef struct h_vertex {
     int size;
-    struct vertex* adjLists[MAX_VERTICES];
+    struct a_vertex* adjLists[MAX_VERTICES];
 } headArray;
 
 /* 탐색 시 vertex 방문 여부 기록 */
