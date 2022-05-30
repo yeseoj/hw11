@@ -153,6 +153,8 @@ int CheckEdge(headArray* h, int v1, int v2) {
 
 /** edge 삽입
  * 인접 정점 노드는 오름차순으로 삽입(오름차순 탐색 위함)
+ * undirected graph를 구현하였으므로
+ * 두 번의 노드 삽입이 일어남; 각자의 인접 정점 리스트에 서로의 값을 가진 노드 삽입
 */
 int InsertEdge(headArray* h, int v1, int v2) {
     /* 그래프가 정의되지 않은 경우 */
