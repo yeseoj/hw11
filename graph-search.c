@@ -8,23 +8,24 @@
 
 #include<stdio.h>
 #include<stdlib.h>
-#define FALSE 0
-#define TRUE 1
-#define MAX_VERTICES 10
-#define MAX_QUEUE_SIZE 10
+#define FALSE 0             /* visited 값 구현 */
+#define TRUE 1              /* visited 값 구현 */
+#define MAX_VERTICES 10     /* 최대 vertex 개수 */
+#define MAX_QUEUE_SIZE 20   /* 최대 큐 원소 개수 */
 
-/* vertex */
-typedef struct vertex {
+/* vertex에 연결되는 인접 정점 */
+typedef struct a_vertex {
     int data;
     struct vertex* link;
 } listNode;
 
-/* 인접 리스트 head */
-typedef struct head {
+/* 인접 리스트의 head vertex */
+typedef struct h_vertex {
     int size;
     struct vertex* adjLists[MAX_VERTICES];
 } headArray;
 
+/* 탐색 시 vertex 방문 여부 기록 */
 short int visited[MAX_VERTICES];
 
 /* for queue */
@@ -35,7 +36,6 @@ int rear = -1;
 void enQueue(int n);
 int deQueue();
 
-
 int initialize(headArray** h);                      /* 그래프 정의 */
 int InsertVertex(headArray* h);                     /* vertex 삽입 */
 int InsertEdge(headArray* h, int v1, int v2);       /* edge 삽입 */
@@ -44,7 +44,8 @@ void DepthFirstSearch(headArray* h, int v);         /* 깊이 우선 탐색 */
 void BreathFirstSearch(headArray* h, int v);        /* 너비 우선 탐색 */
 void resetVisited();                                /* visited 배열 초기화 */
 void PrintGraph(headArray* h);                      /* 그래프 출력 */
-void freeGraph(headArray* h);                       /* 할당된 메모리 해제 */
+void freeGraph(headArray* h);                       /* 그래프에 동적 할당된 메모리 해제 */
+
 
 int main() {
     int search_v, num1, num2;
@@ -66,36 +67,36 @@ int main() {
         scanf(" %c", &command);
 
         switch(command) {
-        case 'z': case 'Z':
+        case 'z': case 'Z': /* 그래프 정의 */
             initialize(&head);
             break;
-        case 'v': case 'V':
+        case 'v': case 'V': /* vertex 삽입 */
             InsertVertex(head);
             break;
-        case 'e': case 'E':
+        case 'e': case 'E': /* edge 삽입 - 연결할 두 vertex 입력 */
             printf("Enter two vertices to connect: ");
             scanf("%d %d", &num1, &num2);
             InsertEdge(head, num1, num2);
             break;
-        case 'd': case 'D':
+        case 'd': case 'D': /* DFS(깊이 우선 탐색) - 시작 정점 입력 */
             printf("Enter Vertex to search for: ");
             scanf("%d", &search_v);
             DepthFirstSearch(head, search_v);
             resetVisited(); /* 다음 탐색을 위해 visited 배열 초기화 */
             break;
-        case 'b': case 'B':
+        case 'b': case 'B': /* BFS(너비 우선 탐색) - 시작 정점 입력 */
             printf("Enter Vertex to search for: ");
             scanf("%d", &search_v);
             BreathFirstSearch(head, search_v);
             resetVisited(); /* 다음 탐색을 위해 visited 배열 초기화 */
             break;
-        case 'p': case 'P':
+        case 'p': case 'P': /* 그래프 출력 */
             PrintGraph(head);
             break;
-        case 'q': case 'Q':
+        case 'q': case 'Q': /* 프로그램 종료 - 동적 할당 해제 */
             freeGraph(head);
             break;
-        default:
+        default:            /* 잘못된 키 입력 시 메세지 출력 */
             printf("Wrong command.\n");
             break;
         }
@@ -105,15 +106,18 @@ int main() {
 
 /* graph 정의 */
 int initialize(headArray** h) {
+    /* 이미 동적 할당되어 있다면 할당 해제 */
     if (*h != NULL) {
         freeGraph(*h);
     }
+
+    /** headArray 포인터에 동적 할당
+     * 인접 리스트의 헤드(정점), 유효 vertex 개수, visited 배열 값 초기화 */
     *h = (headArray*)malloc(sizeof(headArray));
-    for (int i = 0; i < MAX_VERTICES; i++) {
+    for (int i = 0; i < MAX_VERTICES; i++)
         (*h)->adjLists[i] = NULL;
-        visited[i] = FALSE;
-    }
     (*h)->size = 0;
+    resetVisited();
 
     return 0;
 }
@@ -133,6 +137,7 @@ int InsertVertex(headArray* h) {
     return 0;
 }
 
+/* edge의 존재 여부 확인 */
 int CheckEdge(headArray* h, int v1, int v2) {
     listNode* ptr = h->adjLists[v1];
     while (ptr != NULL) {
@@ -147,7 +152,7 @@ int CheckEdge(headArray* h, int v1, int v2) {
 }
 
 /** edge 삽입
- * 인접 노드는 오름차순으로 삽입된다.
+ * 인접 정점 노드는 오름차순으로 삽입(오름차순 탐색 위함)
 */
 int InsertEdge(headArray* h, int v1, int v2) {
     /* 그래프가 정의되지 않은 경우 */
@@ -209,8 +214,10 @@ int InsertEdge(headArray* h, int v1, int v2) {
             trail->link = node_v1;
     }
     /* vertex v2에 대해서도 동일 */
+    /* vertex에 연결된 edge가 없으면 바로 연결 */
     if (h->adjLists[v2] == NULL)
         h->adjLists[v2] = node_v2;
+    /* 그렇지 않은 경우 오름차순으로 삽입 */
     else {
         listNode* p = h->adjLists[v2];
         listNode* trail = NULL;
@@ -239,6 +246,7 @@ int InsertEdge(headArray* h, int v1, int v2) {
     return 0;
 }
 
+/* visited 배열 초기화 */
 void resetVisited() {
     for (int i = 0; i < MAX_VERTICES; i++)
         visited[i] = FALSE;
@@ -258,16 +266,19 @@ void DepthFirstSearch(headArray* h, int v) {
         return;
     }
 
+    /* 현재 정점 방문 기록 및 출력 */
     listNode* w;
     visited[v] = TRUE;
     printf("%5d", v);
+    /** 현재 정점의 인접 정점 중 방문하지 않은 정점으로 DFS 재호출
+     * 오름차순 삽입되었으므로, 여러 개의 방문하지 않은 인접 노드가 있으면
+     * 그중 가장 작은 값의 정점을 방문 */
     for (w = h->adjLists[v]; w; w = w->link) { 
         if (!visited[w->data])
             DepthFirstSearch(h, w->data);
     }
 }
 /** 너비 우선 탐색
- * 숫자가 작은 순으로 방문
  * iterative 방식 */
 void BreathFirstSearch(headArray* h, int v) {
     /* 그래프가 정의되지 않은 경우 */
@@ -275,11 +286,22 @@ void BreathFirstSearch(headArray* h, int v) {
         printf("그래프를 먼저 생성해 주십시오.\n");
         return;
     }
+    /* 그래프에 생성되지 않은 vertex를 입력한 경우 */
+    if (v >= h->size) {
+        printf("그래프에 존재하지 않으므로 시작 정점이 될 수 없습니다.\n");
+        return;
+    }
 
+    /* 현재 정점 방문 기록 및 출력 */
     listNode* w = NULL;
     printf("%5d", v);
     visited[v] = TRUE;
     enQueue(v);
+    /**
+     * 현재 정점의 방문하지 않은 인접 정점을 차례로 방문 및 출력
+     * 오름차순 삽입되었으므로 인접 정점은 숫자가 작은 순서대로 방문
+     * 현재 정점의 인접 정점을 모두 방문했다면
+     * 첫 번째 인접 정점의 인접 정점으로 똑같이 진행 */
     while (1) {
         v = deQueue();
         if (v == -1)
@@ -304,6 +326,7 @@ void PrintGraph(headArray* h) {
 
     listNode* p = NULL;
     printf("Print Graph.\n");
+    /* 유효한 vertex와 해당 vertex의 인접 정점을 출력 */
     for (int i = 0; i < h->size; i++) {
         printf("vertex %d is connected to [ ", i);
         p = h->adjLists[i];
@@ -320,6 +343,7 @@ void freeGraph(headArray* h) {
     listNode* p = NULL;
     listNode* prev = NULL;
 
+    /* 유효한 vertex에 할당된 연결 리스트를 해제 */
     for (int i = 0; i < h->size; i++) {
         p = h->adjLists[i];
         while (p != NULL) {
@@ -328,28 +352,12 @@ void freeGraph(headArray* h) {
             free(prev);
         }
     }
+    /* headArray의 동적 할당도 해제 */
     free(h);
 }
 
-/* for stack */
-void push(int n) {
-    /* 스택이 가득찬 경우 */
-    if (top == MAX_STACK_SIZE)
-        return;
-
-    stack[++top] = n;
-}
-
-int pop() {
-    /* 스택이 비었을 경우 */
-    if (top == -1) {
-        return -1;
-    }
-
-    return stack[top--];
-}
-
 /* for queue */
+/* 큐에 원소 삽입 */
 void enQueue(int n) {
     /* 큐가 가득찬 경우 */
     if ((rear + 1) % MAX_QUEUE_SIZE == front)
@@ -359,6 +367,7 @@ void enQueue(int n) {
     queue[rear] = n;
 }
 
+/* 큐에서 원소 제거 */
 int deQueue() {
     /* 큐가 비었을 경우 */
     if (front == rear)
