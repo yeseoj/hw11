@@ -272,7 +272,8 @@ void DepthFirstSearch(headArray* h, int v) {
     printf("%5d", v);
     /** 현재 정점의 인접 정점 중 방문하지 않은 정점으로 DFS 재호출
      * 오름차순 삽입되었으므로, 여러 개의 방문하지 않은 인접 노드가 있으면
-     * 그중 가장 작은 값의 정점을 방문 */
+     * 그중 가장 작은 값의 정점을 방문
+     * 특정 정점에 방문하지 않은 인접 노드가 전혀 없다면 복귀 주소로 return */
     for (w = h->adjLists[v]; w; w = w->link) { 
         if (!visited[w->data])
             DepthFirstSearch(h, w->data);
@@ -301,7 +302,8 @@ void BreathFirstSearch(headArray* h, int v) {
      * 현재 정점의 방문하지 않은 인접 정점을 차례로 방문 및 출력
      * 오름차순 삽입되었으므로 인접 정점은 숫자가 작은 순서대로 방문
      * 현재 정점의 인접 정점을 모두 방문했다면
-     * 첫 번째 인접 정점의 인접 정점으로 똑같이 진행 */
+     * 첫 번째 인접 정점의 인접 정점으로 똑같이 진행
+     * 모든 정점을 방문하여 큐가 비었다면 루프 탈출->함수 끝 */
     while (1) {
         v = deQueue();
         if (v == -1)
